@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import cors from "cors";
 import mysql from "mysql2/promise"; // Menggunakan versi promise agar bisa async/await
 import dotenv from "dotenv";
+import { pool } from "./lib/database";
 
 // Konfigurasi dotenv
 dotenv.config();
@@ -13,15 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Buat pool koneksi (createConnection per-request boros & gampang habis)
-const pool = mysql.createPool({
-  host: process.env.DB_HOST!,
-  user: process.env.DB_USER!,
-  password: process.env.DB_PASSWORD!,
-  database: process.env.DB_NAME!,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+
 
 // Route Contoh
 app.get("/", async (_req: Request, res: Response) => {
