@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
-    "migration": "tsx src/database/migration.ts",
+    "migration": "tsx src/database/migrate.ts",
     "seed": "tsx src/database/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -26,7 +26,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "knex": "^3.3.0",
-    "mysql2": "^3.23.2"
+    "mysql2": "^3.23.2",
+    "sequelize": "^6.37.8"
   }
 }

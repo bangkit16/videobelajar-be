@@ -1,7 +1,11 @@
+import dotenv from "dotenv";
 import express, { type Request, type Response } from "express";
 import cors from "cors";
-import { pool } from "./database/database";
-import courseRoutes from "./routes/course.routes";
+import courseRoutes from "./routes/class.routes";
+import { sequelize } from "./lib/sequelize";
+import "./model";
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -18,20 +22,23 @@ app.use(express.json());
 // Route Contoh
 app.get("/", async (_req: Request, res: Response) => {
   try {
-    const [rows] = await pool.execute("SELECT NOW() as waktu_sekarang");
+    await sequelize.authenticate();
+    console.log("Connection has been established successfully.");
 
     res.json({
       pesan: "Selamat datang di API Video Belajar",
       status: "Koneksi database sukses!",
-      data: rows,
     });
   } catch (error) {
+    console.error("Unable to connect to the database: ", error);
     res.status(500).json({
       pesan: "Koneksi database gagal",
       error: error instanceof Error ? error.message : error,
     });
   }
 });
+
+app.use("/api/class", courseRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
