@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from "express";
 import cors from "cors";
 import { pool } from "./database/database";
+import courseRoutes from "./routes/course.routes";
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -20,7 +21,8 @@ app.get("/", async (_req: Request, res: Response) => {
     const [rows] = await pool.execute("SELECT NOW() as waktu_sekarang");
 
     res.json({
-      pesan: "Koneksi sukses!",
+      pesan: "Selamat datang di API Video Belajar",
+      status: "Koneksi database sukses!",
       data: rows,
     });
   } catch (error) {
