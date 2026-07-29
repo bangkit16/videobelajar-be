@@ -1,20 +1,18 @@
 import express, { type Request, type Response } from "express";
 import cors from "cors";
-import mysql from "mysql2/promise"; // Menggunakan versi promise agar bisa async/await
-import dotenv from "dotenv";
-import { pool } from "./lib/database";
-
-// Konfigurasi dotenv
-dotenv.config();
+import { pool } from "./database/database";
 
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:3001"],
+  }),
+);
 app.use(express.json());
 
 // Buat pool koneksi (createConnection per-request boros & gampang habis)
-
 
 // Route Contoh
 app.get("/", async (_req: Request, res: Response) => {
