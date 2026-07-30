@@ -38,7 +38,7 @@ export const createClassSchema = z.object({
     hasFinalExam: z.boolean().optional(),
     hasCertificate: z.boolean().optional(),
     tutors: z.array(
-      z.string().min(1, messages.required("ID Tutor")),
+      z.number().int(messages.int("ID Tutor")).positive(messages.positive("ID Tutor")),
     ),
     modules: z.array(
       z.object({
@@ -61,6 +61,8 @@ export const createClassSchema = z.object({
   }),
 });
 
+export type CreateClassInput = z.infer<typeof createClassSchema.shape.body>;
+
 // --- Update ---
 export const updateClassSchema = z.object({
   body: z.object({
@@ -80,8 +82,30 @@ export const updateClassSchema = z.object({
     hasPretest: z.boolean().optional(),
     hasFinalExam: z.boolean().optional(),
     hasCertificate: z.boolean().optional(),
+    modules: z.array(
+      z.object({
+        id: z.number().int(messages.int("ID modul")).positive(messages.positive("ID modul")).optional(),
+        title: z.string().min(1, messages.required("Judul modul")).max(200, messages.max("Judul modul", 200)),
+        sortOrder: z.number().int(messages.int("Urutan")).min(0, "Urutan minimal 0"),
+        duration: z.number().int(messages.int("Durasi")).min(0, "Durasi minimal 0"),
+        materials: z.array(
+          z.object({
+            id: z.number().int(messages.int("ID materi")).positive(messages.positive("ID materi")).optional(),
+            title: z.string().min(1, messages.required("Judul modul")).max(200, messages.max("Judul modul", 200)),
+            sortOrder: z.number().int(messages.int("Urutan")).min(0, "Urutan minimal 0"),
+            type : z.enum(["video", "document", "quiz"]),
+            duration: z.number().int(messages.int("Durasi")).min(0, "Durasi minimal 0"),
+            linkMaterial: z.string().min(1, messages.required("Link modul")).max(255, messages.max("Link modul", 255)).optional(),
+            linkFile: z.string().min(1, messages.required("Link file")).max(255, messages.max("Link file", 255)).optional(),
+            passingScore: z.number().min(0, "Nilai minimal 0").max(100, "Nilai maksimal 100").optional(),
+          })
+        )
+      }),
+    ).optional(),
   }),
   params: z.object({
     id: z.coerce.number().int("ID harus berupa angka bulat").positive("ID harus lebih dari 0"),
   }),
 });
+
+export type UpdateClassInput = z.infer<typeof updateClassSchema.shape.body>;

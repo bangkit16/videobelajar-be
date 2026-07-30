@@ -24,18 +24,10 @@ export class ClassController {
           .json({ success: false, message: "Kelas tidak ditemukan" });
       }
 
-      const mappedRows = rows.map((row) => {
-        const { tutors, ...restData } = row.toJSON();
-        return {
-          ...restData,
-          tutors: tutors[0],
-        };
-      });
-
       res.json({
         success: true,
         message: "Daftar kelas berhasil didapatkan",
-        data: mappedRows,
+        data: rows,
         pagination: wrapPagination(count, page, limit),
       });
     } catch (error) {
