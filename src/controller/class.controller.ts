@@ -13,9 +13,22 @@ export class ClassController {
     try {
       const { sequelize, page, limit } = getPagination(req);
 
+      const search = req.query.search as string;
+      const kategori = req.query.kategori as string;
+      const sortBy = req.query.sortBy as string;
+      const sortOrder = (req.query.sortOrder as string) || "DESC";
+
+      const filter = {
+        sortBy,
+        sortOrder,
+        ...(kategori ? { kategori } : {}),
+        ...(search ? { search } : {}),
+      };
+
       const { rows, count } = await ClassService.getAllClass(
         sequelize.offset,
         sequelize.limit,
+        filter,
       );
 
       if (!rows) {

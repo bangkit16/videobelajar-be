@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import {
   Class,
   ClassModules,
@@ -7,21 +7,44 @@ import {
   Review,
   Tutor,
   User,
+  ClassCategory,
 } from "../model";
-import { ClassCategory } from "../model";
 import { sequelize } from "../lib/sequelize";
-import type { CreateClassInput, UpdateClassInput } from "../schema/class.schema";
+import type {
+  CreateClassInput,
+  UpdateClassInput,
+} from "../schema/class.schema";
+
+type IndexFilters = {
+  kategori?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+};
 
 export class ClassService {
-  public static async getAllClass(offset: number, limit: number) {
+  public static async getAllClass(
+    offset: number,
+    limit: number,
+    filters?: IndexFilters,
+  ) {
+    let order: [string, string][] = [["createdAt", "DESC"]];
+    if (filters?.sortBy) {
+      const dir = filters.sortOrder?.toUpperCase() === "ASC" ? "ASC" : "DESC";
+      order[0] = [filters.sortBy, dir];
+    }
+
     const { count, rows } = await Class.findAndCountAll({
       offset,
       limit,
       distinct: true,
+      where: {
+        ...(filters?.search && { title: { [Op.like]: `%${filters.search}%` } }),
+      },
+      order,
       attributes: {
         exclude: [
           "categoryId",
-          "createdAt",
           "updatedAt",
           "totalVideos",
           "totalDocuments",
@@ -76,11 +99,19 @@ export class ClassService {
             ],
           ],
         },
+        {
+          model: ClassCategory,
+          as: "category",
+          where: {
+            ...(filters?.kategori && { categorySlug: filters?.kategori }),
+          },
+          attributes: [],
+        },
       ],
     });
 
     const mappedRows = rows.map((row) => {
-      const { tutors, ...restData } = row.toJSON();
+      const { createdAt, tutors, ...restData } = row.toJSON();
       return {
         ...restData,
         tutors: tutors[0],
@@ -259,48 +290,71 @@ export class ClassService {
     const transaction = await sequelize.transaction();
 
     try {
-      const [affected] = await Class.update(classData, { where: { id }, transaction });
+      const [affected] = await Class.update(classData, {
+        where: { id },
+        transaction,
+      });
       if (affected === 0) {
         await transaction.rollback();
         return null;
       }
 
-
       if (modules !== undefined) {
         const sentModuleIds = modules.filter((m) => m.id).map((m) => m.id!);
 
         const existingModules = await ClassModules.findAll({
-          where: { classId: id }, attributes: ["id"], transaction,
+          where: { classId: id },
+          attributes: ["id"],
+          transaction,
         });
         const deletedModuleIds = existingModules
           .map((m) => m.getDataValue("id"))
           .filter((mid) => !sentModuleIds.includes(mid));
 
         if (deletedModuleIds.length > 0) {
-          await Material.destroy({ where: { moduleId: deletedModuleIds }, transaction });
-          await ClassModules.destroy({ where: { id: deletedModuleIds }, transaction });
+          await Material.destroy({
+            where: { moduleId: deletedModuleIds },
+            transaction,
+          });
+          await ClassModules.destroy({
+            where: { id: deletedModuleIds },
+            transaction,
+          });
         }
 
         for (const mod of modules) {
           if (mod.id) {
             const { id: moduleId, materials, ...moduleData } = mod;
-            await ClassModules.update(moduleData, { where: { id: moduleId }, transaction });
+            await ClassModules.update(moduleData, {
+              where: { id: moduleId },
+              transaction,
+            });
 
             if (materials !== undefined) {
-              const sentMaterialIds = materials.filter((m) => m.id).map((m) => m.id!);
+              const sentMaterialIds = materials
+                .filter((m) => m.id)
+                .map((m) => m.id!);
               const existingMaterials = await Material.findAll({
-                where: { moduleId }, attributes: ["id"], transaction,
+                where: { moduleId },
+                attributes: ["id"],
+                transaction,
               });
               const deletedMaterialIds = existingMaterials
                 .map((m) => m.getDataValue("id"))
                 .filter((mid) => !sentMaterialIds.includes(mid));
               if (deletedMaterialIds.length > 0) {
-                await Material.destroy({ where: { id: deletedMaterialIds }, transaction });
+                await Material.destroy({
+                  where: { id: deletedMaterialIds },
+                  transaction,
+                });
               }
 
               for (const mat of materials) {
                 if (mat.id) {
-                  await Material.update(mat, { where: { id: mat.id }, transaction });
+                  await Material.update(mat, {
+                    where: { id: mat.id },
+                    transaction,
+                  });
                 } else {
                   await Material.create({ ...mat, moduleId }, { transaction });
                 }
@@ -315,7 +369,10 @@ export class ClassService {
 
             if (materials && materials.length > 0) {
               await Material.bulkCreate(
-                materials.map((mat) => ({ ...mat, moduleId: newModule.getDataValue("id") })),
+                materials.map((mat) => ({
+                  ...mat,
+                  moduleId: newModule.getDataValue("id"),
+                })),
                 { transaction },
               );
             }
@@ -367,7 +424,9 @@ export class ClassService {
       await ClassTutor.destroy({ where: { classId: id }, transaction });
 
       const modules = classData.getDataValue("modules") ?? [];
-      const moduleIds = Array.isArray(modules) ? modules.map((m: any) => m.id) : [];
+      const moduleIds = Array.isArray(modules)
+        ? modules.map((m: any) => m.id)
+        : [];
       if (moduleIds.length > 0) {
         await Material.destroy({ where: { moduleId: moduleIds }, transaction });
         await ClassModules.destroy({ where: { classId: id }, transaction });

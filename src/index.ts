@@ -38,7 +38,7 @@ app.get("/", async (_req: Request, res: Response) => {
   }
 });
 
-app.use("/api/class", courseRoutes);
+app.use("/api/course", courseRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
