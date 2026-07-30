@@ -2,6 +2,7 @@ import { User } from "./user.model";
 import { ClassCategory } from "./class-category.model";
 import { Class } from "./class.model";
 import { Tutor } from "./tutor.model";
+import { ClassTutor } from "./class-tutor.model";
 import { ClassModules } from "./class-modules.model";
 import { Material } from "./material.model";
 import { PreTest } from "./pre-test.model";
@@ -15,22 +16,22 @@ import { Review } from "./review.model";
 ClassCategory.hasMany(Class, { foreignKey: "categoryId", as: "classes" });
 Class.belongsTo(ClassCategory, { foreignKey: "categoryId", as: "category" });
 
-// User -> Tutor, Order, MyClass, Review
-User.hasMany(Tutor, { foreignKey: "userId", as: "tutors" });
+// User -> Tutor (1-to-1), Order, MyClass, Review
+User.hasOne(Tutor, { foreignKey: "userId", as: "tutor" });
 User.hasMany(Order, { foreignKey: "userId", as: "orders" });
 User.hasMany(MyClass, { foreignKey: "userId", as: "myClasses" });
 User.hasMany(Review, { foreignKey: "userId", as: "reviews" });
 
-// Class -> Tutor, ClassModules, Order, MyClass, Review
-Class.hasMany(Tutor, { foreignKey: "classId", as: "tutors" });
+// Class -> Tutor (many-to-many), ClassModules, Order, MyClass, Review
+Class.belongsToMany(Tutor, { through: ClassTutor, as: "tutors", foreignKey: "classId", otherKey: "tutorId" });
 Class.hasMany(ClassModules, { foreignKey: "classId", as: "modules" });
 Class.hasMany(Order, { foreignKey: "classId", as: "orders" });
 Class.hasMany(MyClass, { foreignKey: "classId", as: "myClasses" });
 Class.hasMany(Review, { foreignKey: "classId", as: "reviews" });
 
-// Tutor -> User, Class
+// Tutor -> User (1-to-1), Class (many-to-many)
 Tutor.belongsTo(User, { foreignKey: "userId", as: "user" });
-Tutor.belongsTo(Class, { foreignKey: "classId", as: "class" });
+Tutor.belongsToMany(Class, { through: ClassTutor, as: "classes", foreignKey: "tutorId", otherKey: "classId" });
 
 // ClassModules -> Class, Material
 ClassModules.belongsTo(Class, { foreignKey: "classId", as: "class" });
@@ -60,4 +61,4 @@ Review.belongsTo(User, { foreignKey: "userId", as: "user" });
 Review.belongsTo(Class, { foreignKey: "classId", as: "class" });
 
 // ---- Exports ----
-export { User, ClassCategory, Class, Tutor, ClassModules, Material, PreTest, Order, Payment, MyClass, Review };
+export { User, ClassCategory, Class, Tutor, ClassTutor, ClassModules, Material, PreTest, Order, Payment, MyClass, Review };

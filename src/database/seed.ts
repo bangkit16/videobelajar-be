@@ -6,6 +6,7 @@ import {
   ClassCategory,
   Class,
   Tutor,
+  ClassTutor,
   ClassModules,
   Material,
   PreTest,
@@ -23,6 +24,7 @@ import {
   myClasses,
   reviews,
 } from "./seed-data";
+import type { TutorSeed } from "./seed-data";
 
 async function seedSequelize() {
   try {
@@ -38,6 +40,7 @@ async function seedSequelize() {
     await PreTest.destroy({ where: {}, truncate: true });
     await Material.destroy({ where: {}, truncate: true });
     await ClassModules.destroy({ where: {}, truncate: true });
+    await ClassTutor.destroy({ where: {}, truncate: true });
     await Tutor.destroy({ where: {}, truncate: true });
     await Class.destroy({ where: {}, truncate: true });
     await ClassCategory.destroy({ where: {}, truncate: true });
@@ -77,10 +80,46 @@ async function seedSequelize() {
     console.log(`  ✅ ${categories.length} categories`);
 
     // ════════════════════════════════════════════════════════════════════════
-    // 3. CLASSES + TUTORS
+    // 3. TUTORS (global, unique by userName)
+    // ════════════════════════════════════════════════════════════════════════
+    const tutorNameToId = new Map<string, number>();
+
+    // Collect unique tutors from all classes
+    const uniqueTutors = new Map<string, TutorSeed>();
+    for (const cls of classes) {
+      for (const t of cls.tutors) {
+        if (!uniqueTutors.has(t.userName)) {
+          uniqueTutors.set(t.userName, t);
+        }
+      }
+    }
+
+    for (const [userName, t] of uniqueTutors) {
+      const tutorUser = await User.create({
+        countryCode: "+62",
+        fullname: userName,
+        username: userName.toLowerCase().replace(/\s+/g, "."),
+        email: `${userName.toLowerCase().replace(/\s+/g, ".")}@tutor.videobelajar.com`,
+        password: "tutor123",
+        phoneNumber: "",
+        profileImage: t.avatar,
+      });
+      const tutorUserId = (tutorUser as any).id as number;
+
+      const tutorRec = await Tutor.create({
+        userId: tutorUserId,
+        avatar: t.avatar,
+        company: t.company,
+        role: t.role,
+      });
+      tutorNameToId.set(userName, (tutorRec as any).id as number);
+    }
+    console.log(`  ✅ ${uniqueTutors.size} tutors`);
+
+    // ════════════════════════════════════════════════════════════════════════
+    // 4. CLASSES + ClassTutor links
     // ════════════════════════════════════════════════════════════════════════
     const classSlugMap = new Map<string, number>();
-    const tutorNameMap = new Map<string, number>();
 
     for (const cls of classes) {
       const catId = catSlugMap.get(cls.categorySlug);
@@ -110,35 +149,20 @@ async function seedSequelize() {
       const classId = (classRec as any).id;
       classSlugMap.set(cls.slug, classId);
 
-      // Insert tutors
+      // Link tutors via ClassTutor junction
       for (const t of cls.tutors) {
-        let tutorUserId: number | undefined = tutorNameMap.get(t.userName);
-        if (!tutorUserId) {
-          const tutorUser = await User.create({
-            countryCode: "+62",
-            fullname: t.userName,
-            username: t.userName.toLowerCase().replace(/\s+/g, "."),
-            email: `${t.userName.toLowerCase().replace(/\s+/g, ".")}@tutor.videobelajar.com`,
-            password: "tutor123",
-            phoneNumber: "",
-            profileImage: t.avatar,
-          });
-          tutorUserId = (tutorUser as any).id as number;
-          tutorNameMap.set(t.userName, tutorUserId);
+        const tutorId = tutorNameToId.get(t.userName);
+        if (tutorId) {
+          await sequelize.query(
+            `INSERT INTO ClassTutor (classId, tutorId) VALUES (${classId}, ${tutorId})`
+          );
         }
-        await Tutor.create({
-          userId: tutorUserId!,
-          classId,
-          avatar: t.avatar,
-          company: t.company,
-          role: t.role,
-        });
       }
     }
-    console.log(`  ✅ ${classes.length} classes with tutors`);
+    console.log(`  ✅ ${classes.length} classes linked to tutors`);
 
     // ════════════════════════════════════════════════════════════════════════
-    // 4. MODULES + MATERIALS + PRETEST
+    // 5. MODULES + MATERIALS + PRETEST
     // ════════════════════════════════════════════════════════════════════════
     let totalModules = 0;
     let totalMaterials = 0;
@@ -218,7 +242,7 @@ async function seedSequelize() {
     console.log(`  ✅ ${totalModules} modules, ${totalMaterials} materials, ${pretestQuestions.length} pretest questions`);
 
     // ════════════════════════════════════════════════════════════════════════
-    // 5. ORDERS
+    // 6. ORDERS
     // ════════════════════════════════════════════════════════════════════════
     let orderCount = 0;
     for (const o of orders) {
@@ -241,7 +265,7 @@ async function seedSequelize() {
     console.log(`  ✅ ${orderCount} orders`);
 
     // ════════════════════════════════════════════════════════════════════════
-    // 6. MYCLASS
+    // 7. MYCLASS
     // ════════════════════════════════════════════════════════════════════════
     let myClassCount = 0;
     for (const mc of myClasses) {
@@ -262,7 +286,7 @@ async function seedSequelize() {
     console.log(`  ✅ ${myClassCount} my-class enrollments`);
 
     // ════════════════════════════════════════════════════════════════════════
-    // 7. REVIEWS
+    // 8. REVIEWS
     // ════════════════════════════════════════════════════════════════════════
     let reviewCount = 0;
     for (const r of reviews) {
