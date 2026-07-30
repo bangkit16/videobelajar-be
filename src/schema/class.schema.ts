@@ -37,6 +37,27 @@ export const createClassSchema = z.object({
     hasPretest: z.boolean().optional(),
     hasFinalExam: z.boolean().optional(),
     hasCertificate: z.boolean().optional(),
+    tutors: z.array(
+      z.string().min(1, messages.required("ID Tutor")),
+    ),
+    modules: z.array(
+      z.object({
+        title: z.string().min(1, messages.required("Judul modul")).max(200, messages.max("Judul modul", 200)),
+        sortOrder: z.number().int(messages.int("Urutan")).min(0, "Urutan minimal 0"),
+        duration: z.number().int(messages.int("Durasi")).min(0, "Durasi minimal 0"),
+        materials: z.array(
+          z.object({
+            title: z.string().min(1, messages.required("Judul modul")).max(200, messages.max("Judul modul", 200)),
+            sortOrder: z.number().int(messages.int("Urutan")).min(0, "Urutan minimal 0"),
+            type : z.enum(["video", "document", "quiz"]),
+            duration: z.number().int(messages.int("Durasi")).min(0, "Durasi minimal 0"),
+            linkMaterial: z.string().min(1, messages.required("Link modul")).max(255, messages.max("Link modul", 255)).optional(),
+            linkFile: z.string().min(1, messages.required("Link file")).max(255, messages.max("Link file", 255)).optional(),
+            passingScore: z.number().min(0, "Nilai minimal 0").max(100, "Nilai maksimal 100").optional(),
+          })
+        )
+      }),
+    )
   }),
 });
 

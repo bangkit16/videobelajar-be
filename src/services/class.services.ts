@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import { Class, Review, Tutor, User } from "../model";
+import { Class, ClassModules, Material, Review, Tutor, User } from "../model";
 import { ClassCategory } from "../model";
 
 export class ClassService {
@@ -28,7 +28,7 @@ export class ClassService {
               SELECT COUNT(*) FROM Review
               WHERE Review.classId = Class.id
             )`),
-            "totalReviews",
+            "reviewCount",
           ],
           [
             Sequelize.literal(`(
@@ -36,7 +36,7 @@ export class ClassService {
               FROM Review
               WHERE Review.classId = Class.id
             )`),
-            "averageRating",
+            "rating",
           ],
           [
             Sequelize.literal(`(
@@ -73,6 +73,33 @@ export class ClassService {
 
   public static async findById(id: number) {
     const data = await Class.findByPk(id, {
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+        include: [
+          [
+            Sequelize.literal(`(
+              SELECT categoryName FROM ClassCategory
+              WHERE ClassCategory.id = Class.id
+            )`),
+            "categoryName",
+          ],
+          [
+            Sequelize.literal(`(
+              SELECT COUNT(*) FROM Review
+              WHERE Review.classId = Class.id
+            )`),
+            "reviewCount",
+          ],
+          [
+            Sequelize.literal(`(
+              SELECT COALESCE(AVG(Review.rating), 0)
+              FROM Review
+              WHERE Review.classId = Class.id
+            )`),
+            "rating",
+          ],
+        ],
+      },
       include: [
         {
           model: Tutor,
@@ -91,32 +118,44 @@ export class ClassService {
             ],
           ],
         },
+        {
+          model: Review,
+          as: "reviews",
+          attributes: [
+            "rating",
+            ["alumniOfBatch", "batch"],
+            ["text", "comment"],
+            [
+              Sequelize.literal(`(
+                SELECT fullname FROM User
+                WHERE User.id = reviews.userId
+              )`),
+              "name",
+            ],
+            [
+              Sequelize.literal(`(
+                SELECT profileImage FROM User
+                WHERE User.id = reviews.userId
+              )`),
+              "avatar",
+            ],
+          ],
+        },
+        {
+          model: ClassModules,
+          as: "modules",
+          order: [["sortOrder", "ASC"]],
+          include: [
+            {
+              model: Material,
+              as: "materials",
+              order: [["sortOrder", "ASC"]],
+              attributes: ["title", "type", "duration"],
+            },
+          ],
+          attributes: ["id", "title"],
+        },
       ],
-      attributes: {
-        exclude: ["createdAt", "updatedAt"],
-
-        include: [
-          ["id", "idHebat"],
-          ["title", "titlewoww"],
-          // Subquery: total reviews
-          [
-            Sequelize.literal(`(
-              SELECT COUNT(*) FROM Review
-              WHERE Review.classId = Class.id
-            )`),
-            "totalReviews",
-          ],
-          // Subquery: average rating
-          [
-            Sequelize.literal(`(
-              SELECT COALESCE(AVG(Review.rating), 0)
-              FROM Review
-              WHERE Review.classId = Class.id
-            )`),
-            "averageRating",
-          ],
-        ],
-      },
     });
 
     return data;

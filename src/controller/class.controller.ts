@@ -23,16 +23,14 @@ export class ClassController {
           .status(404)
           .json({ success: false, message: "Kelas tidak ditemukan" });
       }
-      
+
       const mappedRows = rows.map((row) => {
         const { tutors, ...restData } = row.toJSON();
         return {
           ...restData,
-          intructor: tutors[0],
+          tutors: tutors[0],
         };
       });
-
-      
 
       res.json({
         success: true,
@@ -56,6 +54,7 @@ export class ClassController {
       if (!params) return;
 
       const data = await ClassService.findById(params.params.id);
+
       if (!data) {
         res.status(404).json({
           success: false,
@@ -81,10 +80,12 @@ export class ClassController {
 
   public static async create(req: Request, res: Response) {
     try {
-      const body = Validator(createClassSchema)(req, res);
-      if (!body) return;
+      const validated = Validator(createClassSchema)(req, res);
+      if (!validated) return;
 
-      const data = await ClassService.create(body.body);
+      const body = validated.body;
+
+      const data = await ClassService.create(body);
 
       res.status(201).json({
         success: true,
