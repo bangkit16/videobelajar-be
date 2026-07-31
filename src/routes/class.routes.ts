@@ -9,4 +9,6 @@ router.post("/", ClassController.create);
 router.put("/:id", ClassController.update);
 router.delete("/:id", ClassController.delete);
 
+router.post("/upload", () => {});
+
 export default router;

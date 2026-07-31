@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express, { type Request, type Response } from "express";
 import cors from "cors";
 import courseRoutes from "./routes/class.routes";
+import authRoutes from "./routes/auth.routes";
 import { sequelize } from "./lib/sequelize";
 import "./model";
 
@@ -39,6 +40,7 @@ app.get("/", async (_req: Request, res: Response) => {
 });
 
 app.use("/api/course", courseRoutes);
+app.use("/api/auth", authRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
