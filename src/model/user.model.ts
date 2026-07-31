@@ -10,6 +10,7 @@ export const User = sequelize.define(
     username: { type: DataTypes.STRING(100), allowNull: false, unique: true },
     email: { type: DataTypes.STRING(150), allowNull: false, unique: true },
     password: { type: DataTypes.STRING(255), allowNull: false },
+    verificationToken: { type: DataTypes.STRING(255), allowNull: false },
     phoneNumber: { type: DataTypes.STRING(20), allowNull: false },
     profileImage: { type: DataTypes.STRING(255), allowNull: true },
     isVerified: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },

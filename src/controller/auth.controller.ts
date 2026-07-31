@@ -26,8 +26,8 @@ export class AuthController {
 
       res.status(201).json({
         success: true,
-        message: "Registrasi berhasil",
-        user: result.user,
+        message: "Registrasi berhasil, Email Verifikasi berhasil dikirim",
+        // user: result.user,
       });
     } catch (error) {
       console.error("Error register:", error);
@@ -46,7 +46,10 @@ export class AuthController {
 
       const { email, password } = validated.body;
 
-      const { status, session, token } = await AuthService.login({ email, password });
+      const { status, session, token } = await AuthService.login({
+        email,
+        password,
+      });
 
       switch (status) {
         case "NOT_FOUND":
