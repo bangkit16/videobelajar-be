@@ -12,6 +12,7 @@ export const User = sequelize.define(
     password: { type: DataTypes.STRING(255), allowNull: false },
     phoneNumber: { type: DataTypes.STRING(20), allowNull: false },
     profileImage: { type: DataTypes.STRING(255), allowNull: true },
+    isVerified: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   { tableName: "User", timestamps: true },
 );

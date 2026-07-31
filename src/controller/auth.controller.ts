@@ -1,9 +1,44 @@
 import type { Request, Response } from "express";
-import { LoginSchema, type LoginSchemaType } from "../schema/auth.schema";
+import {
+  LoginSchema,
+  RegisterSchema,
+  type LoginSchemaType,
+} from "../schema/auth.schema";
 import { Validator } from "../utils/validator";
 import { AuthService } from "../services/auth.service";
 
 export class AuthController {
+  public static async register(req: Request, res: Response) {
+    try {
+      const validated = Validator(RegisterSchema)(req, res);
+      if (!validated) return;
+
+      const body = validated.body;
+
+      const result = await AuthService.register(body);
+
+      if (result.status === "CONFLICT") {
+        return res.status(409).json({
+          success: false,
+          message: `${result.field} sudah digunakan`,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Registrasi berhasil",
+        user: result.user,
+      });
+    } catch (error) {
+      console.error("Error register:", error);
+      res.status(500).json({
+        success: false,
+        message: "Gagal membuat akun",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+
   public static async login(req: Request, res: Response) {
     try {
       const validated = Validator(LoginSchema)(req, res);
