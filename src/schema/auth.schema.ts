@@ -1,14 +1,14 @@
 import { email, z } from "zod";
 
 export type PayloadJWT = {
-  id: number,
-  countryCode: string,
-  fullname: string,
-  username: string,
-  email: string,
-  phoneNumber: string,
-  profileImage: string,
-}
+  id: number;
+  countryCode: string;
+  fullname: string;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  profileImage: string;
+};
 
 export const LoginSchema = z.object({
   body: z.object({
@@ -33,3 +33,10 @@ export const RegisterSchema = z.object({
 
 export type RegisterSchemaType = z.infer<typeof RegisterSchema.shape.body>;
 
+export const VerifyEmailSchema = z.object({
+  params: z.object({
+    token: z.string().min(1, "Token tidak boleh kosong"),
+  }),
+});
+
+export type VerifyEmailSchemaType = z.infer<typeof VerifyEmailSchema.shape.params>;

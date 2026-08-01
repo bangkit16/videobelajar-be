@@ -2,7 +2,9 @@ import type { Request, Response } from "express";
 import {
   LoginSchema,
   RegisterSchema,
+  VerifyEmailSchema,
   type LoginSchemaType,
+  type VerifyEmailSchemaType,
 } from "../schema/auth.schema";
 import { Validator } from "../utils/validator";
 import { AuthService } from "../services/auth.service";
@@ -62,6 +64,11 @@ export class AuthController {
             success: false,
             message: "Password salah",
           });
+        case "UNVERIFIED":
+          return res.status(403).json({
+            success: false,
+            message: "Email belum diverifikasi",
+          });
       }
 
       return res.status(200).json({
@@ -75,6 +82,38 @@ export class AuthController {
       res.status(500).json({
         success: false,
         message: "Gagal membuat kelas",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+
+  public static async verifyEmail(req: Request, res: Response) {
+    try {
+      const validated = Validator(VerifyEmailSchema)(req, res);
+      if (!validated) return;
+
+      const { token } = validated.params;
+
+      const result = await AuthService.verifyEmail(
+        token as VerifyEmailSchemaType["token"],
+      );
+
+      if (result.status === "NOT_FOUND") {
+        return res.status(404).json({
+          success: false,
+          message: "Token tidak ditemukan",
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Email berhasil diverifikasi",
+      });
+    } catch (error) {
+      console.error("Error verify email:", error);
+      res.status(500).json({
+        success: false,
+        message: "Gagal memverifikasi email",
         error: error instanceof Error ? error.message : error,
       });
     }

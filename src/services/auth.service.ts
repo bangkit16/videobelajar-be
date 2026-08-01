@@ -54,12 +54,12 @@ export class AuthService {
             <div class="title">Verifikasi Akun Anda</div>
             <p class="message">Terima kasih telah mendaftar. Silakan klik tombol di bawah ini untuk memverifikasi alamat email Anda dan mengaktifkan akun.</p>
             <div class="btn-wrapper">
-            <a href="http://localhost:3005/verify-email/${token}" class="btn" target="_blank">Verifikasi Email Sekarang</a>
+            <a href="http://localhost:3005/api/auth/verify-email/${token}" class="btn" target="_blank">Verifikasi Email Sekarang</a>
             </div>
             <div class="footer">
             &copy; ${new Date().getFullYear()} Video Belajar. Semua hak dilindungi.
             </div>
-            <p class="link-fallback">Jika tombol tidak bekerja, salin tautan berikut ke browser Anda:<br>http://localhost:3005/verify-email/${token}</p>
+            <p class="link-fallback">Jika tombol tidak bekerja, salin tautan berikut ke browser Anda:<br>http://localhost:3005/api/auth/verify-email/${token}</p>
         </div>
         </body>
         </html>
@@ -73,16 +73,14 @@ export class AuthService {
       html: htmlContent,
     };
 
-  try {
-    // Menggunakan await menggantikan callback agar eksekusi ditunggu sampai tuntas
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email berhasil dikirim! ID Pesan:", info.messageId);
-    return info;
-  } catch (error) {
-    // Jika Google menolak email Anda, error aslinya akan muncul di sini
-    console.error("Gagal mengirim email ke server SMTP:", error);
-    throw error;
-  }
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Email berhasil dikirim! ID Pesan:", info.messageId);
+      return info;
+    } catch (error) {
+      console.error("Gagal mengirim email ke server SMTP:", error);
+      throw error;
+    }
   }
 
   public static async register(payload: RegisterSchemaType) {
@@ -168,5 +166,17 @@ export class AuthService {
     const token = await this.generateToken(session);
 
     return { status: "SUCCESS", session, token };
+  }
+
+  public static async verifyEmail(token: string) {
+    const user = await User.findOne({ where: { verificationToken: token } });
+
+    if (!user) {
+      return { status: "NOT_FOUND" };
+    }
+
+    await user.update({ isVerified: true, verificationToken: null });
+
+    return { status: "SUCCESS" };
   }
 }

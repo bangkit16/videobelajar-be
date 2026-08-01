@@ -6,9 +6,9 @@ const router = Router();
 
 router.get("/", AuthMiddleware.verifyToken, ClassController.index);
 router.get("/:id", ClassController.detail);
-router.post("/", ClassController.create);
-router.put("/:id", ClassController.update);
-router.delete("/:id", ClassController.delete);
+router.post("/", AuthMiddleware.verifyToken, ClassController.create);
+router.put("/:id", AuthMiddleware.verifyToken, ClassController.update);
+router.delete("/:id", AuthMiddleware.verifyToken, ClassController.delete);
 
 router.post("/upload", () => {});
 
