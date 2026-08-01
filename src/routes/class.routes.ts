@@ -10,6 +10,4 @@ router.post("/", AuthMiddleware.verifyToken, ClassController.create);
 router.put("/:id", AuthMiddleware.verifyToken, ClassController.update);
 router.delete("/:id", AuthMiddleware.verifyToken, ClassController.delete);
 
-router.post("/upload", () => {});
-
 export default router;

@@ -3,8 +3,10 @@ import express, { type Request, type Response } from "express";
 import cors from "cors";
 import courseRoutes from "./routes/class.routes";
 import authRoutes from "./routes/auth.routes";
+import uploadRoutes from "./routes/upload.routes";
 import { sequelize } from "./lib/sequelize";
 import "./model";
+import path from "path";
 
 dotenv.config();
 
@@ -18,9 +20,8 @@ app.use(
 );
 app.use(express.json());
 
-// Buat pool koneksi (createConnection per-request boros & gampang habis)
+app.use("/files", express.static(path.join(process.cwd(), "uploads")));
 
-// Route Contoh
 app.get("/", async (_req: Request, res: Response) => {
   try {
     await sequelize.authenticate();
@@ -41,6 +42,7 @@ app.get("/", async (_req: Request, res: Response) => {
 
 app.use("/api/course", courseRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
